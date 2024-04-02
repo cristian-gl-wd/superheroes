@@ -1,0 +1,8 @@
+<h2 mat-dialog-title>¡Espera!</h2>
+<mat-dialog-content class="mat-typography">
+    <p>¿Estás seguro que deseas descartar los cambios y volver?</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Descartar y volver</button>
+</mat-dialog-actions>
