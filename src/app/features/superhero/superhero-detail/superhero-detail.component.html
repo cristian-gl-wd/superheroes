@@ -1,0 +1,71 @@
+<button mat-mini-fab color="accent" class="mb-3" (click)="comeBack()">
+  <i class="bi bi-arrow-left"></i>
+</button>
+
+<form [formGroup]="superheroForm" (ngSubmit)="onSubmit()">
+  <div class="row">
+    <div class="col-6">
+      <mat-form-field class="w-100">
+        <input matInput placeholder="Nombre" formControlName="name" />
+      </mat-form-field>
+    </div>
+    <div class="col-6">
+      <mat-form-field class="w-100">
+        <input matInput placeholder="Equipo" formControlName="team" />
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <mat-form-field class="w-100">
+        <mat-label>Superpoderes</mat-label>
+        <mat-chip-grid #powersChipGrid aria-label="Superpoderes">
+          @for (power of powers.value; track power) {
+          <mat-chip-row
+            (removed)="removePower(power)"
+            [editable]="true"
+            (edited)="editPower(power, $event)"
+            [aria-description]="'Presiona enter para editar ' + power"
+          >
+            {{ power }}
+            <button matChipRemove>
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
+          </mat-chip-row>
+          }
+          <input
+            placeholder="Añadir un nuevo superpoder..."
+            [matChipInputFor]="powersChipGrid"
+            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+            [matChipInputAddOnBlur]="addOnBlur"
+            (matChipInputTokenEnd)="addPower($event)"
+          />
+        </mat-chip-grid>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6">
+      <button
+        type="submit"
+        [disabled]="superheroForm.pristine"
+        mat-flat-button
+        color="accent"
+        class="w-100"
+      >
+        <i class="bi bi-floppy"></i> Guardar
+      </button>
+    </div>
+    <div class="col-6">
+      <button
+        type="button"
+        mat-flat-button
+        color="warn"
+        class="w-100"
+        (click)="deleteSuperhero()"
+      >
+        <i class="bi bi-trash"></i> Eliminar
+      </button>
+    </div>
+  </div>
+</form>
