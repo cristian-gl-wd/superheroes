@@ -12,12 +12,12 @@ import {
 } from '@angular/material/table';
 import { Router, RouterLink } from '@angular/router';
 
+import { MatDialog } from '@angular/material/dialog';
+import { Observable, filter, switchMap, tap } from 'rxjs';
 import { Superhero } from '../../../models/superhero.model';
 import { ConfirmDeleteDialogComponent } from '../../../shared/components/confirm-delete-dialog/confirm-delete-dialog.component';
-import { NotificationService } from '../../../shared/services/notification.service';
+import { NotificationService } from '../../../shared/services/notification/notification.service';
 import { SuperheroService } from '../superhero.service';
-import { Observable, filter, switchMap, tap } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-superhero-list',

@@ -10,7 +10,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 
 import { SUPERHEROES } from '../../../mocks/superheroes.mock';
-import { NotificationService } from '../../../shared/services/notification.service';
+import { NotificationService } from '../../../shared/services/notification/notification.service';
 import { SuperheroService } from '../superhero.service';
 import { SuperheroListComponent } from './superhero-list.component';
 
