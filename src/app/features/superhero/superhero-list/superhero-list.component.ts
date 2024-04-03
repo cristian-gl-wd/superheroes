@@ -5,7 +5,11 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatTable, MatTableDataSource, MatTableModule } from '@angular/material/table';
+import {
+  MatTable,
+  MatTableDataSource,
+  MatTableModule,
+} from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 
 import { Superhero } from '../../../models/superhero.model';
@@ -22,7 +26,7 @@ import { SuperheroService } from '../superhero.service';
     RouterLink,
     MatChipsModule,
     CommonModule,
-    MatButtonModule
+    MatButtonModule,
   ],
   templateUrl: './superhero-list.component.html',
   styleUrl: './superhero-list.component.css',
@@ -35,7 +39,10 @@ export class SuperheroListComponent implements AfterViewInit {
 
   displayedColumns: string[] = ['name', 'powers', 'team', 'actions'];
 
-  constructor(private superheroService: SuperheroService, private notification: NotificationService) {}
+  constructor(
+    private superheroService: SuperheroService,
+    private notification: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.loadSuperheroes();
@@ -50,14 +57,13 @@ export class SuperheroListComponent implements AfterViewInit {
   loadSuperheroes(): void {
     this.superheroService.getAllSuperheroes().subscribe({
       next: (superheroes) => (this.dataSource.data = [...superheroes]),
-      error: () => this.notification.showNotification('Error cargando superhéroes'),
+      error: () =>
+        this.notification.showNotification('Error cargando superhéroes'),
     });
   }
 
-  filterByName(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
+  filterByName(filterValue: string) {
     this.dataSource.filter = filterValue.trim().toLowerCase();
-
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
