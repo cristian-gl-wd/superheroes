@@ -1,12 +1,13 @@
 <button mat-mini-fab color="accent" class="mb-3" (click)="comeBack()">
   <i class="bi bi-arrow-left"></i>
 </button>
+<span class="superhero-name">{{ inputSuperheroName | titlecase }}</span>
 
 <form [formGroup]="superheroForm" (ngSubmit)="onSubmit()">
   <div class="row">
     <div class="col-6">
       <mat-form-field class="w-100">
-        <input matInput placeholder="Nombre" formControlName="name" />
+        <input matInput [(ngModel)]="inputSuperheroName" placeholder="Nombre" formControlName="name" />
       </mat-form-field>
     </div>
     <div class="col-6">

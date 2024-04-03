@@ -21,7 +21,7 @@ export const SUPERHEROES: Superhero[] = [
     },
     {
         id: 4,
-        name: "Iron Man",
+        name: "iron man",
         powers: ["Inteligencia excepcional", "Armadura tecnológicamente avanzada", "Vuelo", "Variedad de armas"],
         team: "Vengadores"
     },

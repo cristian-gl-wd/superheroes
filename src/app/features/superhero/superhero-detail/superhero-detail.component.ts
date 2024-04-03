@@ -54,6 +54,7 @@ export class SuperheroDetailComponent {
   superheroForm!: FormGroup;
   superhero: Superhero | null = null;
   isNew: boolean = true;
+  inputSuperheroName: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -135,14 +136,16 @@ export class SuperheroDetailComponent {
       .subscribe({
         next: (superhero) => {
           this.superhero = superhero;
-
+          
           this.superheroForm.patchValue({
             name: superhero.name,
             team: superhero.team,
           });
           superhero.powers.forEach((power) =>
-            this.powers.push(this.fb.control(power))
+          this.powers.push(this.fb.control(power))
           );
+          
+          this.inputSuperheroName = superhero.name
         },
         error: (error) => this.notification.showNotification(error.message),
       });
