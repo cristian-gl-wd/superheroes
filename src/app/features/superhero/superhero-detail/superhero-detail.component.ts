@@ -20,14 +20,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, of } from 'rxjs';
-import { filter, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { filter, finalize, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { Superhero } from '../../../models/superhero.model';
 import { ConfirmDeleteDialogComponent } from '../../../shared/components/confirm-delete-dialog/confirm-delete-dialog.component';
 import { ConfirmDiscardChangesDialogComponent } from '../../../shared/components/confirm-discard-changes-dialog/confirm-discard-changes-dialog.component';
-import { NotificationService } from '../../../shared/services/notification.service';
+import { NotificationService } from '../../../shared/services/notification/notification.service';
 import { minArrayLength } from '../../../shared/validators/custom-validators';
 import { SuperheroService } from '../superhero.service';
+import { SpinnerService } from '../../../shared/services/spinner/spinner.service';
 
 @Component({
   selector: 'app-superhero-detail',
@@ -60,10 +61,12 @@ export class SuperheroDetailComponent {
     private fb: FormBuilder,
     private router: Router,
     private dialog: MatDialog,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private spinnerService: SpinnerService
   ) {}
 
   ngOnInit(): void {
+    this.spinnerService.show();
     this.superheroForm = this.fb.group({
       name: ['', Validators.required],
       team: ['', Validators.required],
@@ -74,6 +77,8 @@ export class SuperheroDetailComponent {
     if (id) {
       this.loadSuperhero(id);
       this.isNew = false;
+    } else {
+      this.spinnerService.hide();
     }
 
     this.powers.valueChanges.subscribe(() => {
@@ -89,6 +94,7 @@ export class SuperheroDetailComponent {
       return;
     }
 
+    this.spinnerService.show();
     const isUpdating = this.superhero && this.superhero.id;
     const operation$ = isUpdating
       ? this.superheroService.updateSuperhero({
@@ -100,7 +106,9 @@ export class SuperheroDetailComponent {
     const operationName = isUpdating ? 'actualizado' : 'creado';
     const message = `Superhéroe ${operationName} correctamente`;
 
-    operation$.subscribe({
+    operation$.pipe(
+      finalize(() => this.spinnerService.hide())
+    ).subscribe({
       next: () => {
         this.notification.showNotification(message);
         this.router.navigate(['/superheroes']);
@@ -121,7 +129,9 @@ export class SuperheroDetailComponent {
   loadSuperhero(id: string): void {
     this.superheroService
       .getSuperheroById(+id)
-      .pipe(takeUntil(this.unsubscribe$))
+      .pipe(
+        finalize(() => this.spinnerService.hide()),
+        takeUntil(this.unsubscribe$))
       .subscribe({
         next: (superhero) => {
           this.superhero = superhero;
@@ -202,7 +212,8 @@ export class SuperheroDetailComponent {
       this.notification.showNotification('Superhéroe no existe');
       return;
     }
-
+    
+    this.spinnerService.show();
     this.shouldConfirmDelete()
       .pipe(
         filter((hasConfirmed) => hasConfirmed),
@@ -219,6 +230,7 @@ export class SuperheroDetailComponent {
           error: (error) =>
             this.notification.showNotification(`Error al eliminar el superhéroe: ${error.toString()}`
             ),
+          finalize: () => this.spinnerService.hide()
         })
       )
       .subscribe();
