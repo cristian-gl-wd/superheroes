@@ -10,11 +10,14 @@ import {
   MatTableDataSource,
   MatTableModule,
 } from '@angular/material/table';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { Superhero } from '../../../models/superhero.model';
+import { ConfirmDeleteDialogComponent } from '../../../shared/components/confirm-delete-dialog/confirm-delete-dialog.component';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { SuperheroService } from '../superhero.service';
+import { Observable, filter, switchMap, tap } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-superhero-list',
@@ -41,7 +44,9 @@ export class SuperheroListComponent implements AfterViewInit {
 
   constructor(
     private superheroService: SuperheroService,
-    private notification: NotificationService
+    private notification: NotificationService,
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -70,13 +75,32 @@ export class SuperheroListComponent implements AfterViewInit {
     }
   }
 
-  deleteSuperhero(superhero: Superhero) {
-    this.superheroService.deleteSuperhero(superhero.id).subscribe({
-      next: (result: any) => {
-        this.notification.showNotification(result.message);
-        this.loadSuperheroes();
-      },
-      error: (error) => this.notification.showNotification(error.toString()),
-    });
+  //#region delete
+  deleteSuperhero(superhero: Superhero): void {
+    this.shouldConfirmDelete()
+      .pipe(
+        filter((hasConfirmed) => hasConfirmed),
+        switchMap(() =>
+          this.superheroService.deleteSuperhero(superhero.id)
+        ),
+        tap({
+          next: () => {
+            this.notification.showNotification(
+              'Superhéroe eliminado correctamente'
+            );
+            this.router.navigate(['/superheroes']);
+          },
+          error: (error) =>
+            this.notification.showNotification(`Error al eliminar el superhéroe: ${error.toString()}`
+            ),
+        })
+      )
+      .subscribe();
   }
+
+  private shouldConfirmDelete(): Observable<boolean> {
+    const dialogRef = this.dialog.open(ConfirmDeleteDialogComponent);
+    return dialogRef.afterClosed();
+  }
+  //#endregion delete
 }

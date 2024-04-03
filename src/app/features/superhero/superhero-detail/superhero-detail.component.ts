@@ -15,14 +15,15 @@ import {
   MatChipInputEvent,
   MatChipsModule,
 } from '@angular/material/chips';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, of } from 'rxjs';
-import { filter, switchMap, takeUntil } from 'rxjs/operators';
+import { filter, switchMap, takeUntil, tap } from 'rxjs/operators';
 
 import { Superhero } from '../../../models/superhero.model';
+import { ConfirmDeleteDialogComponent } from '../../../shared/components/confirm-delete-dialog/confirm-delete-dialog.component';
 import { ConfirmDiscardChangesDialogComponent } from '../../../shared/components/confirm-discard-changes-dialog/confirm-discard-changes-dialog.component';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { minArrayLength } from '../../../shared/validators/custom-validators';
@@ -41,6 +42,7 @@ import { SuperheroService } from '../superhero.service';
     MatChipsModule,
     MatButtonModule,
     MatInputModule,
+    MatDialogModule
   ],
 })
 export class SuperheroDetailComponent {
@@ -88,10 +90,12 @@ export class SuperheroDetailComponent {
     }
 
     const isUpdating = this.superhero && this.superhero.id;
-    const operation$ = isUpdating ? this.superheroService.updateSuperhero({
+    const operation$ = isUpdating
+      ? this.superheroService.updateSuperhero({
           ...this.superheroForm.value,
           id: this.superhero?.id,
-        }) : this.superheroService.addSuperhero(this.superheroForm.value);
+        })
+      : this.superheroService.addSuperhero(this.superheroForm.value);
 
     const operationName = isUpdating ? 'actualizado' : 'creado';
     const message = `Superhéroe ${operationName} correctamente`;
@@ -192,15 +196,37 @@ export class SuperheroDetailComponent {
   }
   //#endregion come back
 
+  //#region delete
   deleteSuperhero(): void {
-    if (this.superhero?.id) {
-      this.superheroService.deleteSuperhero(this.superhero.id).subscribe({
-        next: (result: any) => {
-          this.notification.showNotification(result.message);
-          this.comeBack();
-        },
-        error: (error) => this.notification.showNotification(error.toString()),
-      });
+    if (!this.superhero?.id) {
+      this.notification.showNotification('Superhéroe no existe');
+      return;
     }
+
+    this.shouldConfirmDelete()
+      .pipe(
+        filter((hasConfirmed) => hasConfirmed),
+        switchMap(() =>
+          this.superheroService.deleteSuperhero(this.superhero!.id)
+        ),
+        tap({
+          next: () => {
+            this.notification.showNotification(
+              'Superhéroe eliminado correctamente'
+            );
+            this.router.navigate(['/superheroes']);
+          },
+          error: (error) =>
+            this.notification.showNotification(`Error al eliminar el superhéroe: ${error.toString()}`
+            ),
+        })
+      )
+      .subscribe();
   }
+
+  private shouldConfirmDelete(): Observable<boolean> {
+    const dialogRef = this.dialog.open(ConfirmDeleteDialogComponent);
+    return dialogRef.afterClosed();
+  }
+  //#endregion delete
 }
