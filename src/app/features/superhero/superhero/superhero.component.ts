@@ -8,8 +8,4 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './superhero.component.html',
   styleUrl: './superhero.component.css'
 })
-export class SuperheroComponent {
-
-  
-
-}
+export class SuperheroComponent {}
