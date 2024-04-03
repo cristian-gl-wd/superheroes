@@ -1,9 +1,20 @@
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipEditedEvent, MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
+import {
+  MatChipEditedEvent,
+  MatChipInputEvent,
+  MatChipsModule,
+} from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -53,9 +64,9 @@ export class SuperheroDetailComponent {
     this.superheroForm = this.fb.group({
       name: ['', Validators.required],
       team: ['', Validators.required],
-      powers: this.fb.array([], minArrayLength(1))
+      powers: this.fb.array([], minArrayLength(1)),
     });
-  
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadSuperhero(id);
@@ -69,23 +80,27 @@ export class SuperheroDetailComponent {
   }
 
   onSubmit(): void {
-    if (this.superheroForm.valid) {
-      const superheroData = { ...this.superheroForm.value, id: this.superhero?.id };
-      let operation$;
-  
-      if (this.superhero && this.superhero.id) {
-        operation$ = this.superheroService.updateSuperhero({ ...superheroData, id: this.superhero.id });
-      } else {
-        operation$ = this.superheroService.addSuperhero(superheroData);
-      }
-  
-      operation$.subscribe({
-        next: () => this.router.navigate(['/superheroes']),
-        error: (error) => this.notification.showNotification(error.message),
-      });
-    } else {
+    if (!this.superheroForm.valid) {
       this.notification.showNotification('Debes rellenar todos los campos para continuar');
+      return;
     }
+
+    const isUpdating = this.superhero && this.superhero.id;
+    const operation$ = isUpdating ? this.superheroService.updateSuperhero({
+          ...this.superheroForm.value,
+          id: this.superhero?.id,
+        }) : this.superheroService.addSuperhero(this.superheroForm.value);
+
+    const operationName = isUpdating ? 'actualizado' : 'creado';
+    const message = `Superhéroe ${operationName} correctamente`;
+
+    operation$.subscribe({
+      next: () => {
+        this.notification.showNotification(message);
+        this.router.navigate(['/superheroes']);
+      },
+      error: (error) => this.notification.showNotification(error.message),
+    });
   }
 
   ngOnDestroy(): void {
@@ -98,47 +113,49 @@ export class SuperheroDetailComponent {
   }
 
   loadSuperhero(id: string): void {
-    this.superheroService.getSuperheroById(+id).pipe(
-      takeUntil(this.unsubscribe$)
-    ).subscribe({
-      next: (superhero) => {
-        this.superhero = superhero;
+    this.superheroService
+      .getSuperheroById(+id)
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (superhero) => {
+          this.superhero = superhero;
 
-        this.superheroForm.patchValue({
-          name: superhero.name,
-          team: superhero.team,
-
-        });
-        superhero.powers.forEach(power => this.powers.push(this.fb.control(power)));
-      },
-      error: (error) => this.notification.showNotification(error.message),
-    });
+          this.superheroForm.patchValue({
+            name: superhero.name,
+            team: superhero.team,
+          });
+          superhero.powers.forEach((power) =>
+            this.powers.push(this.fb.control(power))
+          );
+        },
+        error: (error) => this.notification.showNotification(error.message),
+      });
   }
 
   //#region power
   addPower(event: MatChipInputEvent): void {
     const value = (event.value || '').trim();
-  
+
     if (value) {
       this.powers.push(this.fb.control(value));
     }
-  
+
     if (event.chipInput) {
       event.chipInput.inputElement.value = '';
     }
-  }  
-  
+  }
+
   removePower(power: string): void {
     const index = this.powers.value.indexOf(power);
     if (index >= 0) {
       this.powers.removeAt(index);
     }
-  }  
+  }
 
   editPower(power: string, event: MatChipEditedEvent): void {
     const value = event.value.trim();
     const index = this.powers.value.indexOf(power);
-    
+
     if (!value) {
       if (index >= 0) {
         this.removePower(power);
@@ -148,24 +165,26 @@ export class SuperheroDetailComponent {
       control.setValue(value);
       control.markAsDirty();
     }
-  }  
+  }
   //#endregion power
 
   //#region come back
   comeBack(): void {
-    this.shouldNavigateAway().pipe(
-      filter(hasAccepted => hasAccepted),
-      switchMap(() => {
-        return this.router.navigate(['/superheroes']);
-      })
-    ).subscribe();
+    this.shouldNavigateAway()
+      .pipe(
+        filter((hasAccepted) => hasAccepted),
+        switchMap(() => {
+          return this.router.navigate(['/superheroes']);
+        })
+      )
+      .subscribe();
   }
-  
+
   private shouldNavigateAway(): Observable<boolean> {
     if (!this.superheroForm.dirty) {
       return of(true);
     }
-  
+
     const dialogRef = this.dialog.open(ConfirmDiscardChangesDialogComponent);
     return dialogRef.afterClosed();
   }
