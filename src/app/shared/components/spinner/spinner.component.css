@@ -1,0 +1,23 @@
+.spinner-overlay {
+    position: absolute;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+}
+
+.spinner-content {
+    position: relative;
+    width: 100px;
+    margin: auto;
+    align-self: center;
+}
+
+.spinner-border.spinner-border-xl {
+    width: 100px;
+    height: 100px;
+}
