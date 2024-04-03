@@ -67,9 +67,8 @@ export class SuperheroListComponent implements AfterViewInit {
     });
   }
 
-  filterByName(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
+  filterByName(heroName: string) {
+    this.dataSource.filter = heroName.trim().toLowerCase();
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
@@ -85,10 +84,8 @@ export class SuperheroListComponent implements AfterViewInit {
         ),
         tap({
           next: () => {
-            this.notification.showNotification(
-              'Superhéroe eliminado correctamente'
-            );
-            this.router.navigate(['/superheroes']);
+            this.loadSuperheroes();
+            this.notification.showNotification('Superhéroe eliminado correctamente');
           },
           error: (error) =>
             this.notification.showNotification(`Error al eliminar el superhéroe: ${error.toString()}`
