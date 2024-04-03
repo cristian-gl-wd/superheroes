@@ -8,7 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { filter, switchMap, takeUntil } from 'rxjs/operators';
 
 import { Superhero } from '../../../models/superhero.model';
@@ -161,7 +161,7 @@ export class SuperheroDetailComponent {
     ).subscribe();
   }
   
-  private shouldNavigateAway() {
+  private shouldNavigateAway(): Observable<boolean> {
     if (!this.superheroForm.dirty) {
       return of(true);
     }
