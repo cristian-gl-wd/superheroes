@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatInputModule } from '@angular/material/input';
@@ -11,8 +17,14 @@ import {
   MatTableModule,
 } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { fromEvent } from 'rxjs';
-import { debounceTime, distinctUntilChanged, finalize, map } from 'rxjs/operators';
+import { Subject, fromEvent } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  map,
+  takeUntil,
+} from 'rxjs/operators';
 
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, filter, switchMap, tap } from 'rxjs';
@@ -37,16 +49,19 @@ import { SuperheroService } from '../superhero.service';
   templateUrl: './superhero-list.component.html',
   styleUrl: './superhero-list.component.css',
 })
-export class SuperheroListComponent implements AfterViewInit {
+export class SuperheroListComponent implements AfterViewInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatTable) table!: MatTable<Superhero>;
   dataSource = new MatTableDataSource<Superhero>([]);
 
   displayedColumns: string[] = ['name', 'powers', 'team', 'actions'];
+  private unsubscribe$ = new Subject<void>();
 
-  @ViewChild('searchInputHero') searchInputHero: ElementRef<HTMLInputElement> | undefined;
-  
+  @ViewChild('searchInputHero') searchInputHero:
+    | ElementRef<HTMLInputElement>
+    | undefined;
+
   constructor(
     private superheroService: SuperheroService,
     private notification: NotificationService,
@@ -65,24 +80,36 @@ export class SuperheroListComponent implements AfterViewInit {
     this.table.dataSource = this.dataSource;
 
     if (this.searchInputHero) {
-      fromEvent(this.searchInputHero.nativeElement, 'input').pipe(
-        map((event: Event) => (event.target as HTMLInputElement).value),
-        debounceTime(500),
-        distinctUntilChanged()
-      ).subscribe(value => {
-        this.filterByName(value.toUpperCase());
-      });
+      fromEvent(this.searchInputHero.nativeElement, 'input')
+        .pipe(
+          takeUntil(this.unsubscribe$),
+          map((event: Event) => (event.target as HTMLInputElement).value),
+          debounceTime(500),
+          distinctUntilChanged()
+        )
+        .subscribe((value) => {
+          this.filterByName(value.toUpperCase());
+        });
     }
   }
 
+  ngOnDestroy(): void {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+  }
+  
+
   loadSuperheroes(): void {
-    this.superheroService.getAllSuperheroes().pipe(
-      finalize(() => this.spinnerService.hide())
-    ).subscribe({
-      next: (superheroes) => (this.dataSource.data = [...superheroes]),
-      error: () =>
-        this.notification.showNotification('Error cargando superhéroes'),
-    });
+    this.superheroService
+      .getAllSuperheroes()
+      .pipe(
+        takeUntil(this.unsubscribe$),
+        finalize(() => this.spinnerService.hide()))
+      .subscribe({
+        next: (superheroes) => (this.dataSource.data = [...superheroes]),
+        error: () =>
+          this.notification.showNotification('Error cargando superhéroes'),
+      });
   }
 
   filterByName(heroName: string) {
@@ -101,10 +128,13 @@ export class SuperheroListComponent implements AfterViewInit {
         tap({
           next: () => {
             this.loadSuperheroes();
-            this.notification.showNotification('Superhéroe eliminado correctamente');
+            this.notification.showNotification(
+              'Superhéroe eliminado correctamente'
+            );
           },
           error: (error) =>
-            this.notification.showNotification(`Error al eliminar el superhéroe: ${error.toString()}`
+            this.notification.showNotification(
+              `Error al eliminar el superhéroe: ${error.toString()}`
             ),
         })
       )
